@@ -8,9 +8,12 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\CommonComponents;
 use Filament\Resources\Resource;
+use RalphJSmit\Filament\SEO\SEO;
 use App\Models\Pages as PageModel;
 use Filament\Forms\Components\Select;
+use App\Filament\Components\CustomSEO;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\PageResource\Pages;
@@ -66,7 +69,38 @@ class PageResource extends Resource
                             'draft' => 'Draft',
                             'archived' => 'Archived',
                             'published' => 'Published',
-                        ])
+                        ]),
+                        SEO::make()
+                        ->schema([
+                            Forms\Components\TextInput::make('title')->label('SEO Title'),
+                            Forms\Components\TextInput::make('description')->label('SEO Description'),
+                            Forms\Components\TextInput::make('robots')->label('Robots'),
+                            Forms\Components\TextInput::make('canonical_url')
+                                ->label('Canonical URL')
+                                ->url()
+                                ->nullable(),
+                        ]),
+                TagsInput::make('seo.meta.focus_keywords')
+                        ->label('Focus Keywords')
+                        ->placeholder('Enter keywords separated by commas...')
+                        ->helperText('Add focus keywords for SEO analysis.')
+                        ->required()
+                        ->afterStateHydrated(function ($component, $record) {
+                            if ($record && $record->seo) {
+                                $meta = json_decode($record->seo->meta, true) ?? [];
+                                // Set the focus_keywords state with the existing tags
+                                $component->state($meta['focus_keywords'] ?? []);
+            
+                            }
+                        })
+                        ->afterStateUpdated(function ($state, $record) {
+                            if ($record && $record->seo) {
+                                $seo = $record->seo;
+                                $meta = json_decode($seo->meta, true) ?? []; // Decode the JSON
+                                $meta['focus_keywords'] = $state;  // Update focus_keywords
+                                $seo->update(['meta' => json_encode($meta)]);  // Re-encode the meta as JSON
+                            }
+                        }),
             ]);
     }
 

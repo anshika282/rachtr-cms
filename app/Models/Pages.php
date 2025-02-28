@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Models\Pages;
 use App\Models\CommonComponents;
 use Illuminate\Database\Eloquent\Model;
+use RalphJSmit\Laravel\SEO\Support\HasSEO;
 
 class Pages extends Model
 {
+    use HasSEO;
     protected $fillable = [
         'title',
         'slug',
